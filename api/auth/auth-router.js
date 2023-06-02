@@ -1,7 +1,19 @@
-const router = require('express').Router();
+const router = require("express").Router();
+const authModel = require("./auth-model");
 
-router.post('/register', (req, res) => {
-  res.end('kayıt olmayı ekleyin, lütfen!');
+router.post("/register", async (req, res, next) => {
+  // res.end("kayıt olmayı ekleyin, lütfen!");
+  try {
+    const newUser = {
+      username: req.body.username,
+      password: req.body.password,
+    };
+    await authModel.create(newUser);
+    res.status(201).json({ message: "kullanici olusturuldu" });
+  } catch (error) {
+    next(error);
+  }
+
   /*
     EKLEYİN
     Uçnoktanın işlevselliğine yardımcı olmak için middlewarelar yazabilirsiniz.
@@ -29,8 +41,8 @@ router.post('/register', (req, res) => {
   */
 });
 
-router.post('/login', (req, res) => {
-  res.end('girişi ekleyin, lütfen!');
+router.post("/login", (req, res) => {
+  res.end("girişi ekleyin, lütfen!");
   /*
     EKLEYİN
     Uçnoktanın işlevselliğine yardımcı olmak için middlewarelar yazabilirsiniz.
