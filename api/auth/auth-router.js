@@ -1,15 +1,20 @@
 const router = require("express").Router();
 const authModel = require("./auth-model");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../secret/index");
 
 router.post("/register", async (req, res, next) => {
   // res.end("kayıt olmayı ekleyin, lütfen!");
   try {
+    const { username, password } = req.body;
+    const hashedPassword = bcrypt.hashSync(password, 8);
     const newUser = {
-      username: req.body.username,
-      password: req.body.password,
+      username: username,
+      password: hashedPassword,
     };
-    await authModel.create(newUser);
-    res.status(201).json({ message: "kullanici olusturuldu" });
+    const insertedUser = await authModel.create(newUser);
+    res.status(201).json(insertedUser);
   } catch (error) {
     next(error);
   }
@@ -41,8 +46,29 @@ router.post("/register", async (req, res, next) => {
   */
 });
 
-router.post("/login", (req, res) => {
-  res.end("girişi ekleyin, lütfen!");
+router.post("/login", async (req, res, next) => {
+  // res.end("girişi ekleyin, lütfen!");
+  try {
+    const { username, password } = req.body;
+    const user = await authModel.getBy({ username: username });
+    const isPasswordMatched = bcrypt.compareSync(password, user.password);
+    if (!isPasswordMatched) {
+      res.status(400).json({ message: "geçersiz kriterler" });
+    } else {
+      const payload = {
+        username: username,
+        id: user.id,
+      };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" });
+      res.status(201).json({
+        message: `${user.username} geri geldi!`,
+        token: token,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+
   /*
     EKLEYİN
     Uçnoktanın işlevselliğine yardımcı olmak için middlewarelar yazabilirsiniz.
